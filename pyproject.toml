@@ -1,0 +1,11 @@
+[project]
+name = "house-hunter"
+version = "0.1.0"
+description = "House hunting agent that scrapes and analyzes real estate listings"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "homeharvest>=0.8.18",
+    "litellm>=1.81.15",
+    "pandas>=2.3.3",
+]
