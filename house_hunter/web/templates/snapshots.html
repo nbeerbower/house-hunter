@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Score Snapshots — House Hunter{% endblock %}
+
+{% block content %}
+<h2>Score Snapshots</h2>
+<p>Save your current scoring parameters (preferences, locations, districts), tweak them, and compare results.</p>
+
+<form method="post" action="{{ url_for('browse.snapshots') }}">
+    <fieldset role="group">
+        <input type="text" name="name" placeholder="Snapshot name..." required>
+        <button type="submit">Save Snapshot</button>
+    </fieldset>
+</form>
+
+{% if snapshots %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Listings</th>
+            <th>Avg Score</th>
+            <th>Created</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in snapshots %}
+        <tr>
+            <td>{{ s.id }}</td>
+            <td>{{ s.name }}</td>
+            <td>{{ s.listing_count }}</td>
+            <td>{% if s.avg_score %}{{ s.avg_score }}{% else %}—{% endif %}</td>
+            <td>{{ s.created_at | short_date }}</td>
+            <td>
+                {% if s.preferences_hash == current_hash %}
+                <span class="snapshot-current">Current</span>
+                {% endif %}
+            </td>
+            <td class="search-actions">
+                <a href="{{ url_for('browse.snapshots', compare=s.name) }}" role="button" class="outline small-btn">Compare</a>
+                <form method="post" action="{{ url_for('browse.restore_snapshot', snapshot_id=s.id) }}" style="display:inline">
+                    <button type="submit" class="outline small-btn">Restore</button>
+                </form>
+                <form method="post" action="{{ url_for('browse.delete_snapshot', snapshot_id=s.id) }}" style="display:inline">
+                    <button type="submit" class="outline secondary small-btn">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No snapshots saved yet.</p>
+{% endif %}
+
+{% if comparison is not none %}
+<hr>
+<h3>Comparison: "{{ compare_snap.name }}" vs Current</h3>
+
+{% if comparison %}
+<table class="comparison-table">
+    <thead>
+        <tr>
+            <th>Address</th>
+            <th>Old Score</th>
+            <th>New Score</th>
+            <th>Delta</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in comparison %}
+        <tr>
+            <td>{{ row.address }}{% if row.city %}, {{ row.city }}{% endif %}</td>
+            <td>{% if row.old_score is not none %}{{ '%.1f' | format(row.old_score) }}{% else %}—{% endif %}</td>
+            <td>{% if row.new_score is not none %}{{ '%.1f' | format(row.new_score) }}{% else %}—{% endif %}</td>
+            <td>
+                {% if row.delta is not none %}
+                <span class="{% if row.delta > 0.1 %}delta-positive{% elif row.delta < -0.1 %}delta-negative{% else %}delta-neutral{% endif %}">
+                    {{ '%+.1f' | format(row.delta) }}
+                </span>
+                {% else %}—{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% set deltas = comparison | selectattr('delta', 'ne', none) | map(attribute='delta') | list %}
+{% if deltas %}
+<p class="comparison-summary">
+    <strong>Summary:</strong>
+    Avg delta: {{ '%+.2f' | format(deltas | sum / deltas | length) }} |
+    {{ deltas | select('gt', 0.1) | list | length }} improved,
+    {{ deltas | select('lt', -0.1) | list | length }} declined,
+    {{ deltas | reject('gt', 0.1) | reject('lt', -0.1) | list | length }} stable
+</p>
+{% endif %}
+{% else %}
+<p>No comparable scores found between snapshot and current state.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

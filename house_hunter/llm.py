@@ -76,10 +76,13 @@ class LLM:
         favorites: list[dict],
         rejections_summary: str,
         start_index: int = 1,
+        distances_map: dict[str, list[dict]] | None = None,
+        districts_map: dict[str, dict] | None = None,
+        distance_locations: list[dict] | None = None,
     ) -> list[dict]:
         """Score a single batch of listings. Returns list of {property_id, score, reasoning}."""
-        listings_text = format_listing_batch(listings, start_index)
-        system_prompt = build_scoring_system_prompt(preferences, favorites, rejections_summary)
+        listings_text = format_listing_batch(listings, start_index, distances_map, districts_map)
+        system_prompt = build_scoring_system_prompt(preferences, favorites, rejections_summary, distance_locations)
         user_prompt = build_scoring_user_prompt(listings_text)
 
         response_text = self.complete(system_prompt, user_prompt)
@@ -94,6 +97,9 @@ class LLM:
         rejections_summary: str,
         cached_scores: dict[str, dict],
         on_progress: Optional[Callable[[int, int], None]] = None,
+        distances_map: dict[str, list[dict]] | None = None,
+        districts_map: dict[str, dict] | None = None,
+        distance_locations: list[dict] | None = None,
     ) -> list[dict]:
         """Score all listings, using cache where available. Returns sorted by score desc."""
         # Split into cached and uncached
@@ -131,6 +137,9 @@ class LLM:
                 batch_scores = self.score_listings(
                     batch, preferences, favorites, rejections_summary,
                     start_index=start + 1,
+                    distances_map=distances_map,
+                    districts_map=districts_map,
+                    distance_locations=distance_locations,
                 )
                 results.extend(batch_scores)
             except Exception as e:

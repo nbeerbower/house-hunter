@@ -58,6 +58,49 @@
     </div>
 </section>
 
+{% if distances %}
+<section>
+    <h3>Distances</h3>
+    <div class="facts-grid">
+        {% for d in distances %}
+        <div>
+            <strong>{{ d.name }}</strong><br>
+            {{ d.distance_miles }} mi
+            <br><small>priority {{ d.priority }}</small>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if district %}
+<section>
+    <h3>School District</h3>
+    <div class="district-info">
+        <strong>{{ district.name }}</strong>
+        {% if district.rating %}
+        <span class="district-rating">{{ district.rating }}/10</span>
+        {% endif %}
+        {% if district.excluded %}
+        <span class="district-excluded">EXCLUDED</span>
+        {% endif %}
+    </div>
+    {% if district.enrollment or district.school_count or district.student_teacher_ratio %}
+    <div class="facts-grid" style="margin-top:0.75rem">
+        {% if district.enrollment %}
+        <div><strong>Enrollment</strong><br>{{ '{:,}'.format(district.enrollment) }}</div>
+        {% endif %}
+        {% if district.school_count %}
+        <div><strong>Schools</strong><br>{{ district.school_count }}</div>
+        {% endif %}
+        {% if district.student_teacher_ratio %}
+        <div><strong>S:T Ratio</strong><br>{{ '%.0f' | format(district.student_teacher_ratio) }}:1</div>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
 {% if listing.description %}
 <section>
     <h3>Description</h3>

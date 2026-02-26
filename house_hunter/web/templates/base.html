@@ -16,6 +16,9 @@
             <li><a href="{{ url_for('browse.listings') }}" {% if request.path == '/listings' %}aria-current="page"{% endif %}>Listings</a></li>
             <li><a href="{{ url_for('browse.favorites') }}" {% if request.path == '/favorites' %}aria-current="page"{% endif %}>Favorites</a></li>
             <li><a href="{{ url_for('browse.preferences') }}" {% if request.path == '/preferences' %}aria-current="page"{% endif %}>Preferences</a></li>
+            <li><a href="{{ url_for('browse.locations') }}" {% if request.path == '/locations' %}aria-current="page"{% endif %}>Locations</a></li>
+            <li><a href="{{ url_for('browse.districts') }}" {% if request.path == '/districts' %}aria-current="page"{% endif %}>Districts</a></li>
+            <li><a href="{{ url_for('browse.snapshots') }}" {% if request.path == '/snapshots' %}aria-current="page"{% endif %}>Snapshots</a></li>
             <li><a href="{{ url_for('agent.index') }}" {% if request.path.startswith('/agent') %}aria-current="page"{% endif %}>Agent</a></li>
         </ul>
     </nav>

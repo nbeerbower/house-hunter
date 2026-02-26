@@ -1,4 +1,9 @@
-def format_listing_for_prompt(listing: dict, index: int) -> str:
+def format_listing_for_prompt(
+    listing: dict,
+    index: int,
+    distances: list[dict] | None = None,
+    district: dict | None = None,
+) -> str:
     """Format a single listing as a compact one-liner for LLM prompts."""
     price = listing.get("price")
     price_str = f"${price:,.0f}" if price else "Price N/A"
@@ -44,14 +49,30 @@ def format_listing_for_prompt(listing: dict, index: int) -> str:
     ]
     if desc:
         lines.append(f"  {desc}")
+    if distances:
+        dist_parts = [f"{d['name']}: {d['distance_miles']} mi" for d in distances]
+        lines.append(f"  Distances: {', '.join(dist_parts)}")
+    if district:
+        d_str = district["name"]
+        if district.get("rating"):
+            d_str += f", rated {district['rating']}/10"
+        lines.append(f"  School District: {d_str}")
     return "\n".join(lines)
 
 
-def format_listing_batch(listings: list[dict], start_index: int = 1) -> str:
+def format_listing_batch(
+    listings: list[dict],
+    start_index: int = 1,
+    distances_map: dict[str, list[dict]] | None = None,
+    districts_map: dict[str, dict] | None = None,
+) -> str:
     """Format a batch of listings for an LLM prompt."""
     parts = []
     for i, listing in enumerate(listings):
-        parts.append(format_listing_for_prompt(listing, start_index + i))
+        pid = listing.get("property_id", "")
+        dists = (distances_map or {}).get(pid)
+        district = (districts_map or {}).get(pid)
+        parts.append(format_listing_for_prompt(listing, start_index + i, dists, district))
     return "\n\n".join(parts)
 
 
@@ -59,6 +80,7 @@ def build_scoring_system_prompt(
     preferences: list[str],
     favorites: list[dict],
     rejections_summary: str,
+    distance_locations: list[dict] | None = None,
 ) -> str:
     """Build the system prompt for scoring listings."""
     pref_bullets = "\n".join(f"- {p}" for p in preferences) if preferences else "- No specific preferences set yet"
@@ -76,11 +98,18 @@ def build_scoring_system_prompt(
     if rejections_summary:
         rej_section = f"\n\nProperties the buyer has REJECTED (use as negative signal):\n  {rejections_summary}"
 
+    loc_section = ""
+    if distance_locations:
+        loc_lines = []
+        for loc in distance_locations:
+            loc_lines.append(f"  - {loc['name']} (priority {loc['priority']})")
+        loc_section = "\n\nImportant locations (closer is better, especially higher priority):\n" + "\n".join(loc_lines)
+
     return f"""You are a real estate analyst helping a home buyer evaluate listings.
 
 Buyer's preferences:
 {pref_bullets}
-{fav_section}{rej_section}
+{fav_section}{rej_section}{loc_section}
 
 Score each listing from 0 to 10 based on how well it matches the buyer's preferences.
 - 9-10: Excellent match, should definitely visit

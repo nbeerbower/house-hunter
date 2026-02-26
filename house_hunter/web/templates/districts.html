@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}School Districts — House Hunter{% endblock %}
+
+{% block content %}
+<h2>School Districts</h2>
+<p>Map zip codes to school districts, rate them, and exclude districts you want to avoid.</p>
+
+<div class="listing-controls">
+    <form method="post" action="{{ url_for('browse.districts') }}" style="display:flex;gap:0.5rem;flex:1;align-items:flex-end">
+        <input type="text" name="name" placeholder="District name" required>
+        <input type="text" name="zip_code" placeholder="Zip code" pattern="\d{5}" required style="max-width:120px">
+        <input type="text" name="state" placeholder="State (optional)" style="max-width:80px">
+        <button type="submit">Assign Zip</button>
+    </form>
+    <form method="post" action="{{ url_for('browse.populate_districts') }}" style="display:inline">
+        <button type="submit" class="outline">Populate Districts</button>
+    </form>
+    <form method="post" action="{{ url_for('browse.fetch_district_ratings') }}" style="display:inline">
+        <button type="submit" class="outline">Fetch Ratings</button>
+    </form>
+</div>
+
+{% if districts %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>District</th>
+            <th>State</th>
+            <th>Zip Codes</th>
+            <th>Listings</th>
+            <th>Enrollment</th>
+            <th>Schools</th>
+            <th>S:T Ratio</th>
+            <th>Rating</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for d in districts %}
+        <tr{% if d.excluded %} class="district-row-excluded"{% endif %}>
+            <td>{{ d.id }}</td>
+            <td>{{ d.name }}</td>
+            <td>{{ d.state or '—' }}</td>
+            <td>{{ d.zip_codes or '—' }}</td>
+            <td>{{ d.listing_count or 0 }}</td>
+            <td>{% if d.enrollment %}{{ '{:,}'.format(d.enrollment) }}{% else %}—{% endif %}</td>
+            <td>{{ d.school_count or '—' }}</td>
+            <td>{% if d.student_teacher_ratio %}{{ '%.0f' | format(d.student_teacher_ratio) }}:1{% else %}—{% endif %}</td>
+            <td>
+                <form method="post" action="{{ url_for('browse.rate_district', district_id=d.id) }}" class="inline-form">
+                    <fieldset role="group" class="rating-group">
+                        <input type="number" name="rating" min="1" max="10" value="{{ d.rating or '' }}" placeholder="—" class="rating-input">
+                        <button type="submit" class="outline small-btn">Rate</button>
+                    </fieldset>
+                </form>
+            </td>
+            <td>
+                {% if d.excluded %}
+                <span class="district-excluded">EXCLUDED</span>
+                {% else %}
+                <span class="district-active">Active</span>
+                {% endif %}
+            </td>
+            <td class="search-actions">
+                {% if d.excluded %}
+                <form method="post" action="{{ url_for('browse.toggle_district_exclusion', district_id=d.id) }}" style="display:inline">
+                    <input type="hidden" name="exclude" value="0">
+                    <button type="submit" class="outline small-btn">Include</button>
+                </form>
+                {% else %}
+                <form method="post" action="{{ url_for('browse.toggle_district_exclusion', district_id=d.id) }}" style="display:inline">
+                    <input type="hidden" name="exclude" value="1">
+                    <button type="submit" class="outline secondary small-btn">Exclude</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No school districts mapped yet. Use "Populate Districts" to auto-detect from listing coordinates.</p>
+{% endif %}
+{% endblock %}

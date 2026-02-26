@@ -12,7 +12,48 @@
         </label>
         <button type="submit">Search</button>
     </form>
+    {% if shortlist %}
+    <form method="post" action="{{ url_for('agent.save_search') }}" class="save-search-form">
+        <fieldset role="group">
+            <input type="text" name="name" placeholder="Save current search as..." required>
+            <button type="submit" class="outline">Save Search</button>
+        </fieldset>
+    </form>
+    {% endif %}
 </details>
+
+{% if saved_searches %}
+<details>
+    <summary role="button" class="outline secondary">Saved Searches ({{ saved_searches | length }})</summary>
+    <table class="saved-searches-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Last Used</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in saved_searches %}
+            <tr>
+                <td>{{ s.name }}</td>
+                <td>{{ s.config_json | parse_search_location }}</td>
+                <td>{{ s.last_used_at | short_date if s.last_used_at else 'Never' }}</td>
+                <td class="search-actions">
+                    <form method="post" action="{{ url_for('agent.load_search', search_id=s.id) }}" style="display:inline">
+                        <button type="submit" class="outline small-btn">Load</button>
+                    </form>
+                    <form method="post" action="{{ url_for('agent.delete_search', search_id=s.id) }}" style="display:inline">
+                        <button type="submit" class="outline secondary small-btn">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</details>
+{% endif %}
 
 {% if shortlist %}
 <section>

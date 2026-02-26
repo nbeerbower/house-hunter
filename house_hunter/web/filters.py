@@ -1,3 +1,4 @@
+import json
 from urllib.parse import quote
 
 from flask import Flask
@@ -103,3 +104,14 @@ def register_filters(app: Flask):
         if not value:
             return ''
         return quote(str(value), safe='')
+
+    @app.template_filter('parse_search_location')
+    def parse_search_location_filter(config_json):
+        """Extract location from a saved search config JSON string."""
+        if not config_json:
+            return '?'
+        try:
+            config = json.loads(config_json)
+            return config.get('location', '?')
+        except (json.JSONDecodeError, TypeError):
+            return '?'

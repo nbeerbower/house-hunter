@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Locations — House Hunter{% endblock %}
+
+{% block content %}
+<h2>Distance Locations</h2>
+<p>Add important locations to see how far each listing is. Distances are used in scoring (closer is better for higher priority).</p>
+
+{% if locations | length < 3 %}
+<form method="post" action="{{ url_for('browse.locations') }}">
+    <div class="listing-controls">
+        <input type="text" name="name" placeholder="e.g. Philadelphia, PA or 123 Main St, Springfield" required>
+        <select name="priority">
+            <option value="1">Priority 1</option>
+            <option value="2">Priority 2</option>
+            <option value="3">Priority 3 (highest)</option>
+        </select>
+        <button type="submit">Add Location</button>
+    </div>
+</form>
+{% else %}
+<p><em>Maximum 3 locations reached. Remove one to add another.</em></p>
+{% endif %}
+
+{% if locations %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Priority</th>
+            <th>Coordinates</th>
+            <th>Added</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for loc in locations %}
+        <tr>
+            <td>{{ loc.id }}</td>
+            <td>{{ loc.name }}</td>
+            <td>{{ loc.priority }}</td>
+            <td>{{ '%.4f' | format(loc.latitude) }}, {{ '%.4f' | format(loc.longitude) }}</td>
+            <td>{{ loc.created_at | short_date }}</td>
+            <td>
+                <form method="post" action="{{ url_for('browse.delete_location', loc_id=loc.id) }}">
+                    <button type="submit" class="outline secondary small-btn">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No locations added yet.</p>
+{% endif %}
+{% endblock %}
