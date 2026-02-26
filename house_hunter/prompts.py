@@ -23,6 +23,12 @@ def format_listing_for_prompt(listing: dict, index: int) -> str:
     year = listing.get("year_built")
     year_str = f"Built {year:.0f}" if year else "Year N/A"
 
+    hoa = listing.get("hoa_fee")
+    if hoa and hoa > 0:
+        hoa_str = f"HOA ${hoa:,.0f}/mo"
+    else:
+        hoa_str = "No HOA"
+
     address = listing.get("address", "")
     city = listing.get("city", "")
     state = listing.get("state", "")
@@ -33,7 +39,7 @@ def format_listing_for_prompt(listing: dict, index: int) -> str:
         desc = desc[:200] + "..."
 
     lines = [
-        f"[#{index}] {price_str} | {beds_str}/{baths_str} | {sqft_str} | {lot_str} | {year_str}",
+        f"[#{index}] {price_str} | {beds_str}/{baths_str} | {sqft_str} | {lot_str} | {year_str} | {hoa_str}",
         f"  {location}",
     ]
     if desc:

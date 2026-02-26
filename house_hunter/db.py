@@ -38,6 +38,7 @@ class Database:
                 list_date TEXT,
                 photo_url TEXT,
                 mls_id TEXT,
+                hoa_fee REAL,
                 first_seen_at TEXT NOT NULL,
                 last_seen_at TEXT NOT NULL,
                 raw_data TEXT
@@ -80,6 +81,14 @@ class Database:
             );
         """)
         self.conn.commit()
+        self._migrate()
+
+    def _migrate(self):
+        """Add columns that may not exist in older databases."""
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(listings)").fetchall()}
+        if "hoa_fee" not in cols:
+            self.conn.execute("ALTER TABLE listings ADD COLUMN hoa_fee REAL")
+            self.conn.commit()
 
     def _now(self) -> str:
         return datetime.now(timezone.utc).isoformat()
@@ -87,7 +96,7 @@ class Database:
     def upsert_listings(self, df: pd.DataFrame) -> tuple[list[str], list[str]]:
         """Insert or update listings from a DataFrame. Returns (new_ids, price_changed_ids)."""
         new_ids = []
-        price_changed_ids = []
+        price_changed_ids = set()
         now = self._now()
 
         for _, row in df.iterrows():
@@ -116,14 +125,18 @@ class Database:
                 "SELECT property_id, price FROM listings WHERE property_id = ?", (pid,)
             ).fetchone()
 
+            hoa_fee = raw.get("hoa_fee")
+            if hoa_fee is not None:
+                hoa_fee = float(hoa_fee)
+
             if existing is None:
                 self.conn.execute(
                     """INSERT INTO listings
                        (property_id, address, city, state, zip_code, price, beds, baths,
                         sqft, lot_sqft, year_built, latitude, longitude, description,
-                        property_type, status, list_date, photo_url, mls_id,
+                        property_type, status, list_date, photo_url, mls_id, hoa_fee,
                         first_seen_at, last_seen_at, raw_data)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         pid,
                         address,
@@ -144,6 +157,7 @@ class Database:
                         raw.get("list_date"),
                         raw.get("primary_photo"),
                         raw.get("mls_id"),
+                        hoa_fee,
                         now,
                         now,
                         json.dumps(raw, default=str),
@@ -160,7 +174,7 @@ class Database:
                         "UPDATE listings SET price = ? WHERE property_id = ?",
                         (price, pid),
                     )
-                    price_changed_ids.append(pid)
+                    price_changed_ids.add(pid)
 
             # Record price history
             if price is not None:
@@ -173,7 +187,7 @@ class Database:
                     pass  # Same price already recorded
 
         self.conn.commit()
-        return new_ids, price_changed_ids
+        return new_ids, list(price_changed_ids)
 
     # --- Preferences ---
 

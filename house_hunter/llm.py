@@ -22,11 +22,11 @@ class LLM:
     def __init__(self, config: LLMConfig):
         self.config = config
         self.debug = os.environ.get("HOUSE_HUNTER_DEBUG", "").lower() in ("1", "true", "yes")
-        # For local servers (llama-server), set a dummy key so the openai
-        # SDK doesn't complain. litellm passes it through but llama-server
-        # ignores auth entirely.
-        if config.is_local:
-            os.environ.setdefault("OPENAI_API_KEY", "not-needed")
+        # Force-set OPENAI_API_KEY for local servers. litellm passes api_key
+        # in kwargs but the OpenAI SDK client constructor also independently
+        # checks the env var and blows up if it's missing.
+        if config.is_local and not os.environ.get("OPENAI_API_KEY"):
+            os.environ["OPENAI_API_KEY"] = "not-needed"
 
     def _debug_log(self, label: str, text: str):
         if not self.debug:
@@ -52,8 +52,12 @@ class LLM:
         )
         if self.config.api_base:
             kwargs["api_base"] = self.config.api_base
+        # For local servers, always pass a dummy key so litellm/openai SDK
+        # doesn't blow up. The actual api_key config takes priority if set.
         if self.config.api_key:
             kwargs["api_key"] = self.config.api_key
+        elif self.config.is_local:
+            kwargs["api_key"] = "not-needed"
         response = litellm.completion(**kwargs)
         content = response.choices[0].message.content
         self._debug_log("LLM RESPONSE", content)

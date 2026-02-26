@@ -113,3 +113,4 @@ class AppConfig:
     search: SearchConfig = field(default_factory=SearchConfig)
     llm: LLMConfig = field(default_factory=LLMConfig)
     db_path: str = "house_hunter.db"
+    exclude_hoa: bool = False

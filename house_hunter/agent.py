@@ -50,6 +50,14 @@ class Agent:
 
         listings = [l for l in all_listings if l["property_id"] in search_pids]
 
+        # Exclude HOA listings if requested
+        if self.config.exclude_hoa:
+            before = len(listings)
+            listings = [l for l in listings if not l.get("hoa_fee") or l["hoa_fee"] == 0]
+            excluded = before - len(listings)
+            if excluded:
+                print(f"  Excluded {excluded} listings with HOA fees")
+
         # Exclude rejected
         rejected = self.db.get_rejected_ids()
         listings = [l for l in listings if l["property_id"] not in rejected]
@@ -362,6 +370,12 @@ Or just type naturally — e.g., "I want a big yard" adds a preference."""
             f"Type: {listing.get('property_type', 'N/A')}  |  Status: {listing.get('status', 'N/A')}",
         ]
 
+        hoa = listing.get("hoa_fee")
+        if hoa and hoa > 0:
+            lines.append(f"HOA: ${hoa:,.0f}/mo")
+        else:
+            lines.append("HOA: None")
+
         if listing.get("mls_id"):
             lines.append(f"MLS: {listing['mls_id']}")
 
@@ -437,12 +451,14 @@ Or just type naturally — e.g., "I want a big yard" adds a preference."""
             addr = item.get("address", "")
             city = item.get("city", "")
             reasoning = item.get("reasoning", "")
+            hoa = item.get("hoa_fee")
+            hoa_tag = f"  HOA${hoa:,.0f}" if hoa and hoa > 0 else ""
 
             # Score bar
             filled = int(score)
             bar = "█" * filled + "░" * (10 - filled)
 
-            lines.append(f"  #{item['index']:>2}  [{bar}] {score:4.1f}  {price_str:>12}  {beds_str}bd/{baths_str}ba  {sqft_str:>6} sqft  {addr}, {city}")
+            lines.append(f"  #{item['index']:>2}  [{bar}] {score:4.1f}  {price_str:>12}  {beds_str}bd/{baths_str}ba  {sqft_str:>6} sqft  {addr}, {city}{hoa_tag}")
             if reasoning:
                 lines.append(f"       {reasoning[:100]}")
             lines.append("")

@@ -24,6 +24,7 @@ def main():
     parser.add_argument("--limit", type=int, default=500, help="Max listings to fetch (default: 500)")
     parser.add_argument("--type", dest="property_type", nargs="+",
                         help="Property types (e.g. single_family multi_family condo)")
+    parser.add_argument("--no-hoa", action="store_true", help="Exclude listings with HOA fees")
     args = parser.parse_args()
 
     # Convert lot acres to sqft for the API
@@ -52,7 +53,7 @@ def main():
     )
 
     llm_config = LLMConfig.from_env()
-    app_config = AppConfig(search=search_config, llm=llm_config)
+    app_config = AppConfig(search=search_config, llm=llm_config, exclude_hoa=args.no_hoa)
     agent = Agent(app_config)
     cli = CLI(agent)
     cli.run()
