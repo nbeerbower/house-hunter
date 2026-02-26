@@ -18,7 +18,11 @@
         <button type="submit">Search</button>
     </form>
     <form method="post" action="{{ url_for('browse.rescore') }}" style="display:inline">
-        <button type="submit" class="outline">Rescore All</button>
+        <button type="submit" class="outline">Rescore</button>
+    </form>
+    <form method="post" action="{{ url_for('browse.rescore') }}" style="display:inline">
+        <input type="hidden" name="force" value="1">
+        <button type="submit" class="outline secondary">Force Rescore</button>
     </form>
 </div>
 

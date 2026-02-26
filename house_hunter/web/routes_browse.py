@@ -218,15 +218,24 @@ def delete_location(loc_id):
 @browse_bp.route('/rescore', methods=['POST'])
 def rescore():
     from house_hunter.web import get_agent
+    db = get_db()
+    force = request.form.get('force', '') == '1'
     try:
         ag = get_agent()
         # Load all listings into agent if not already loaded
         if not ag.current_listings:
-            db = get_db()
             listings = db.get_all_listings()
             ag.current_listings = {l['property_id']: l for l in listings}
+
+        # Delete cached scores for current hash so LLM re-scores everything
+        if force:
+            pref_hash = db.get_preferences_hash()
+            db.conn.execute("DELETE FROM scores WHERE preferences_hash = ?", (pref_hash,))
+            db.conn.commit()
+
         ag._score_listings(list(ag.current_listings.values()))
-        flash(f'Rescored {len(ag.current_listings)} listings.', 'success')
+        label = 'Force-rescored' if force else 'Rescored'
+        flash(f'{label} {len(ag.current_listings)} listings.', 'success')
     except Exception as e:
         flash(f'Rescore failed: {e}', 'warning')
     return redirect(url_for('browse.listings'))
