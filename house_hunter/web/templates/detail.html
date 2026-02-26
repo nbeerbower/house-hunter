@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ listing.address }} — House Hunter{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('browse.listings') }}">&laquo; Back to listings</a>
+
+{% if listing.photo_url %}
+<div class="detail-photo">
+    <img src="{{ listing.photo_url }}" alt="{{ listing.address }}">
+</div>
+{% endif %}
+
+<hgroup>
+    <h2>{{ listing.address }}{% if listing.city %}, {{ listing.city }}{% endif %}{% if listing.state %}, {{ listing.state }}{% endif %} {{ listing.zip_code or '' }}</h2>
+    <p class="detail-price">{{ listing.price | currency }}</p>
+</hgroup>
+
+<div class="actions-bar">
+    <form method="post" action="{{ url_for('browse.listing_action') }}" style="display:inline">
+        <input type="hidden" name="pid" value="{{ listing.property_id }}">
+        <input type="hidden" name="action" value="favorite">
+        <button type="submit" class="outline">Favorite</button>
+    </form>
+    <form method="post" action="{{ url_for('browse.listing_action') }}" style="display:inline">
+        <input type="hidden" name="pid" value="{{ listing.property_id }}">
+        <input type="hidden" name="action" value="reject">
+        <button type="submit" class="outline secondary">Reject</button>
+    </form>
+    {% if listing.property_id.startswith('http') %}
+    <a href="{{ listing.property_id }}" target="_blank" role="button" class="outline contrast">View Original</a>
+    {% endif %}
+</div>
+
+{% if score %}
+<section class="score-section">
+    <h3>Score</h3>
+    <div class="score-bar-container large">
+        <div class="score-bar {{ score.score | score_color }}" style="width: {{ score.score | score_pct }}%"></div>
+        <span class="score-badge {{ score.score | score_color }}">{{ '%.1f' | format(score.score) }} / 10</span>
+    </div>
+    {% if score.reasoning %}
+    <p class="score-reasoning">{{ score.reasoning }}</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<section>
+    <h3>Details</h3>
+    <div class="facts-grid">
+        <div><strong>Beds</strong><br>{{ listing.beds | format_beds }}</div>
+        <div><strong>Baths</strong><br>{{ listing.baths | format_baths }}</div>
+        <div><strong>Sqft</strong><br>{{ listing.sqft | format_sqft }}</div>
+        <div><strong>Lot</strong><br>{{ listing.lot_sqft | format_lot }}</div>
+        <div><strong>Year Built</strong><br>{{ listing.year_built | format_beds if listing.year_built else 'N/A' }}</div>
+        <div><strong>HOA</strong><br>{% if listing.hoa_fee and listing.hoa_fee > 0 %}{{ listing.hoa_fee | currency }}/mo{% else %}None{% endif %}</div>
+        <div><strong>Type</strong><br>{{ listing.property_type or 'N/A' }}</div>
+        <div><strong>Status</strong><br>{{ listing.status or 'N/A' }}</div>
+    </div>
+</section>
+
+{% if listing.description %}
+<section>
+    <h3>Description</h3>
+    <p>{{ listing.description }}</p>
+</section>
+{% endif %}
+
+{% if price_history and price_history | length > 1 %}
+<section>
+    <h3>Price History</h3>
+    <table>
+        <thead>
+            <tr><th>Price</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+            {% for ph in price_history %}
+            <tr>
+                <td>{{ ph.price | currency }}</td>
+                <td>{{ ph.recorded_at | short_date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+{% if notes %}
+<section>
+    <h3>Notes</h3>
+    {% for n in notes %}
+    <blockquote>
+        {{ n.note }}
+        <footer>{{ n.created_at | short_date }}</footer>
+    </blockquote>
+    {% endfor %}
+</section>
+{% endif %}
+
+<section>
+    <h3>Add Note</h3>
+    <form method="post" action="{{ url_for('browse.listing_action') }}">
+        <input type="hidden" name="pid" value="{{ listing.property_id }}">
+        <input type="hidden" name="action" value="note">
+        <fieldset role="group">
+            <input type="text" name="note" placeholder="Add a note..." required>
+            <button type="submit">Add</button>
+        </fieldset>
+    </form>
+</section>
+
+{% if listing.mls_id %}
+<small>MLS: {{ listing.mls_id }}</small>
+{% endif %}
+{% endblock %}

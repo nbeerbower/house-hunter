@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}House Hunter{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>House Hunter</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{{ url_for('browse.listings') }}" {% if request.path == '/listings' %}aria-current="page"{% endif %}>Listings</a></li>
+            <li><a href="{{ url_for('browse.favorites') }}" {% if request.path == '/favorites' %}aria-current="page"{% endif %}>Favorites</a></li>
+            <li><a href="{{ url_for('browse.preferences') }}" {% if request.path == '/preferences' %}aria-current="page"{% endif %}>Preferences</a></li>
+            <li><a href="{{ url_for('agent.index') }}" {% if request.path.startswith('/agent') %}aria-current="page"{% endif %}>Agent</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div role="alert" class="flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container">
+        <small>House Hunter</small>
+    </footer>
+</body>
+</html>

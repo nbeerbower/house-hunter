@@ -29,3 +29,6 @@ data/
 *.db
 *.db-wal
 *.db-shm
+
+# Logs
+debug.log

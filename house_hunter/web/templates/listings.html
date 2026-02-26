@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Listings — House Hunter{% endblock %}
+
+{% block content %}
+<hgroup>
+    <h2>Listings</h2>
+    <p>{{ total }} properties{% if q %} matching "{{ q }}"{% endif %}</p>
+</hgroup>
+
+<form method="get" action="{{ url_for('browse.listings') }}" role="search" class="listing-controls">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search address, city, zip...">
+    <select name="sort" onchange="this.form.submit()">
+        <option value="score" {% if sort == 'score' %}selected{% endif %}>Sort by Score</option>
+        <option value="price" {% if sort == 'price' %}selected{% endif %}>Sort by Price</option>
+        <option value="date" {% if sort == 'date' %}selected{% endif %}>Sort by Date</option>
+    </select>
+    <button type="submit">Search</button>
+</form>
+
+{% if listings %}
+<div class="listing-grid">
+    {% for item in listings %}
+    <article class="listing-card">
+        <a href="{{ url_for('browse.detail', pid=item.property_id) }}">
+            {% if item.photo_url %}
+            <img src="{{ item.photo_url }}" alt="{{ item.address }}" loading="lazy">
+            {% else %}
+            <div class="no-photo">No Photo</div>
+            {% endif %}
+        </a>
+        <div class="card-body">
+            <div class="card-price">{{ item.price | currency }}</div>
+            <div class="card-address">
+                <a href="{{ url_for('browse.detail', pid=item.property_id) }}">
+                    {{ item.address }}{% if item.city %}, {{ item.city }}{% endif %}
+                </a>
+            </div>
+            <div class="card-facts">
+                {{ item.beds | format_beds }} bd | {{ item.baths | format_baths }} ba | {{ item.sqft | format_sqft }} sqft
+            </div>
+            {% if item.score is not none %}
+            <div class="score-bar-container">
+                <div class="score-bar {{ item.score | score_color }}" style="width: {{ item.score | score_pct }}%"></div>
+                <span class="score-badge {{ item.score | score_color }}">{{ '%.1f' | format(item.score) }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+{% if total_pages > 1 %}
+<nav class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('browse.listings', page=page-1, sort=sort, q=q) }}" role="button" class="outline">&laquo; Prev</a>
+    {% endif %}
+    <span>Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="{{ url_for('browse.listings', page=page+1, sort=sort, q=q) }}" role="button" class="outline">Next &raquo;</a>
+    {% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<p>No listings found. {% if q %}Try a different search.{% else %}Run a search from the Agent page or CLI first.{% endif %}</p>
+{% endif %}
+{% endblock %}

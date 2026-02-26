@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Agent — House Hunter{% endblock %}
+
+{% block content %}
+<h2>Agent</h2>
+
+<details {% if not shortlist %}open{% endif %}>
+    <summary role="button" class="outline">Search for Properties</summary>
+    <form method="post" action="{{ url_for('agent.search') }}">
+        <label>Location
+            <input type="text" name="location" placeholder="e.g. Bucks County, PA" required>
+        </label>
+        <button type="submit">Search</button>
+    </form>
+</details>
+
+{% if shortlist %}
+<section>
+    <div class="shortlist-header">
+        <h3>Top Listings</h3>
+        <form method="post" action="{{ url_for('agent.refresh') }}" style="display:inline">
+            <button type="submit" class="outline small-btn">Refresh Scores</button>
+        </form>
+    </div>
+
+    <div class="listing-grid">
+        {% for item in shortlist %}
+        <article class="listing-card">
+            <a href="{{ url_for('browse.detail', pid=item.property_id) }}">
+                {% if item.photo_url %}
+                <img src="{{ item.photo_url }}" alt="{{ item.address }}" loading="lazy">
+                {% else %}
+                <div class="no-photo">No Photo</div>
+                {% endif %}
+            </a>
+            <div class="card-body">
+                <div class="card-price">{{ item.price | currency }}</div>
+                <div class="card-address">
+                    <a href="{{ url_for('browse.detail', pid=item.property_id) }}">
+                        {{ item.get('address', '') }}{% if item.city %}, {{ item.city }}{% endif %}
+                    </a>
+                </div>
+                <div class="card-facts">
+                    {{ item.beds | format_beds }} bd | {{ item.baths | format_baths }} ba | {{ item.sqft | format_sqft }} sqft
+                </div>
+                {% if item.score is not none %}
+                <div class="score-bar-container">
+                    <div class="score-bar {{ item.score | score_color }}" style="width: {{ item.score | score_pct }}%"></div>
+                    <span class="score-badge {{ item.score | score_color }}">{{ '%.1f' | format(item.score) }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="chat-section">
+    <h3>Chat</h3>
+
+    <div class="chat-history">
+        {% if not chat_history %}
+        <p class="chat-empty">Ask the agent anything about your listings, add preferences, or run commands.</p>
+        {% endif %}
+        {% for msg in chat_history %}
+        <div class="chat-msg {{ msg.role }}">
+            <div class="chat-bubble">{{ msg.content }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <form method="post" action="{{ url_for('agent.chat') }}" class="chat-input">
+        <fieldset role="group">
+            <input type="text" name="message" placeholder="e.g. I prefer homes with at least 2 acres..." required autofocus>
+            <button type="submit">Send</button>
+        </fieldset>
+    </form>
+</section>
+{% endblock %}

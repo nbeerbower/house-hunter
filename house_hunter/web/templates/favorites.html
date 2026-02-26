@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Favorites — House Hunter{% endblock %}
+
+{% block content %}
+<h2>Favorites</h2>
+
+{% if listings %}
+<div class="listing-grid">
+    {% for item in listings %}
+    <article class="listing-card">
+        <a href="{{ url_for('browse.detail', pid=item.property_id) }}">
+            {% if item.photo_url %}
+            <img src="{{ item.photo_url }}" alt="{{ item.address }}" loading="lazy">
+            {% else %}
+            <div class="no-photo">No Photo</div>
+            {% endif %}
+        </a>
+        <div class="card-body">
+            <div class="card-price">{{ item.price | currency }}</div>
+            <div class="card-address">
+                <a href="{{ url_for('browse.detail', pid=item.property_id) }}">
+                    {{ item.address }}{% if item.city %}, {{ item.city }}{% endif %}
+                </a>
+            </div>
+            <div class="card-facts">
+                {{ item.beds | format_beds }} bd | {{ item.baths | format_baths }} ba | {{ item.sqft | format_sqft }} sqft
+            </div>
+            {% if item.score is not none %}
+            <div class="score-bar-container">
+                <div class="score-bar {{ item.score | score_color }}" style="width: {{ item.score | score_pct }}%"></div>
+                <span class="score-badge {{ item.score | score_color }}">{{ '%.1f' | format(item.score) }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<p>No favorites yet. Browse listings and favorite the ones you like.</p>
+{% endif %}
+{% endblock %}

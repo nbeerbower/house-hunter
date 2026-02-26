@@ -25,6 +25,9 @@ def main():
     parser.add_argument("--type", dest="property_type", nargs="+",
                         help="Property types (e.g. single_family multi_family condo)")
     parser.add_argument("--no-hoa", action="store_true", help="Exclude listings with HOA fees")
+    parser.add_argument("--web", action="store_true", help="Launch web UI instead of CLI")
+    parser.add_argument("--host", default="127.0.0.1", help="Web server host (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8181, help="Web server port (default: 8181)")
     args = parser.parse_args()
 
     # Convert lot acres to sqft for the API
@@ -54,9 +57,15 @@ def main():
 
     llm_config = LLMConfig.from_env()
     app_config = AppConfig(search=search_config, llm=llm_config, exclude_hoa=args.no_hoa)
-    agent = Agent(app_config)
-    cli = CLI(agent)
-    cli.run()
+
+    if args.web:
+        from house_hunter.web import create_app
+        flask_app = create_app(app_config)
+        flask_app.run(host=args.host, port=args.port, debug=True)
+    else:
+        agent = Agent(app_config)
+        cli = CLI(agent)
+        cli.run()
 
 
 if __name__ == "__main__":

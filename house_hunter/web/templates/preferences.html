@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Preferences — House Hunter{% endblock %}
+
+{% block content %}
+<h2>Preferences</h2>
+
+<form method="post" action="{{ url_for('browse.preferences') }}">
+    <fieldset role="group">
+        <input type="text" name="text" placeholder="e.g. I want a big yard with mature trees" required>
+        <button type="submit">Add Preference</button>
+    </fieldset>
+</form>
+
+{% if prefs %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Preference</th>
+            <th>Added</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in prefs %}
+        <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.text }}</td>
+            <td>{{ p.created_at | short_date }}</td>
+            <td>
+                <form method="post" action="{{ url_for('browse.delete_preference', pref_id=p.id) }}">
+                    <button type="submit" class="outline secondary" style="margin:0;padding:0.25rem 0.5rem">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No preferences set. Add what you're looking for and the agent will score listings against them.</p>
+{% endif %}
+{% endblock %}
